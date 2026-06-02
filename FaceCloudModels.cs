@@ -14,10 +14,23 @@ namespace facecloud.core
         // нетривіальний метод 1: реєстрація з валідацією даних (умовні конструкції та винятки)
         public bool Register(string email, string password)
         {
-            if (string.IsNullOrWhiteSpace(email) || !email.Contains("@"))
+            if (string.IsNullOrWhiteSpace(email))
             {
                 throw new ArgumentException("некоректний формат email");
             }
+
+            var emailParts = email.Split('@');
+
+            if (emailParts.Length != 2 ||
+                string.IsNullOrWhiteSpace(emailParts[0]) ||
+                string.IsNullOrWhiteSpace(emailParts[1]) ||
+                !emailParts[1].Contains(".") ||
+                emailParts[1].StartsWith(".") ||
+                emailParts[1].EndsWith("."))
+            {
+                throw new ArgumentException("некоректний формат email");
+            }
+
             if (string.IsNullOrWhiteSpace(password) || password.Length < 6)
             {
                 throw new ArgumentException("пароль має бути не менше 6 символів");
@@ -26,16 +39,6 @@ namespace facecloud.core
             Email = email;
             Password = password;
             return true;
-        }
-
-        // нетривіальний метод 2: авторизація з перевіркою стану об'єкта
-        public bool Login(string email, string password)
-        {
-            if (string.IsNullOrEmpty(Email))
-            {
-                throw new InvalidOperationException("користувач ще не зареєстрований");
-            }
-            return Email == email && Password == password;
         }
 
         // нетривіальний метод 3: створення публікації з обмеженням на довжину тексту
@@ -54,7 +57,7 @@ namespace facecloud.core
             {
                 Id = Posts.Count + 1,
                 Content = content,
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             };
             Posts.Add(post);
             return post;
@@ -86,7 +89,6 @@ namespace facecloud.core
         public DateTime CreatedAt { get; set; }
     }
 
-    // ось тут додано обгортку класу, тепер структура дужок правильна
     public class Program
     {
         public static void Main(string[] args)
